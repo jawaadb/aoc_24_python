@@ -2,7 +2,7 @@ import numpy as np
 from helpers import load_text
 import math
 
-# FILE_PATH = "problem_01_example.txt"
+# FILE_PATH = "problem_01_example2.txt"
 FILE_PATH = "problem_01_data1.txt"
 
 
@@ -19,14 +19,11 @@ def main():
 
     assert numbers.shape[1] == 2
 
-    left_numbers = np.sort(numbers[:, 0])
-    right_numbers = np.sort(numbers[:, 1])
+    occurrences = np.array(
+        [np.sum(num == numbers[:, 1]) for num in numbers[:, 0]], dtype=np.int32
+    )
 
-    sorted_numbers = np.vstack([left_numbers, right_numbers]).transpose()
-
-    distances = np.abs(np.diff(sorted_numbers, axis=1))
-
-    print(np.sum(distances))
+    print(np.sum(numbers[:, 0] * occurrences))
 
 
 main()
