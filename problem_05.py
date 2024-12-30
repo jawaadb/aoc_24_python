@@ -52,15 +52,14 @@ def main():
         assert book.size % 2 == 1
         return book[(book.size - 1) // 2]
 
+    def sum_mid_pages(books) -> int:
+        return np.sum([extract_middle_page(book) for book in books])
+
     rules, books = load_file(FILE_PATH)
 
     correct_books = filter(partial(check_against_rules, rules=rules), books)
 
-    mid_page_sum = 0
-    for book in correct_books:
-        mid_page_sum += extract_middle_page(book)
-
-    print(f"{mid_page_sum=}")  # Answer: 5166
+    print(f"{sum_mid_pages(correct_books)=}")
 
 
 main()
