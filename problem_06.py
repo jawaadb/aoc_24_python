@@ -2,8 +2,8 @@ import numpy as np
 from helpers import load_text
 
 
-FILE_PATH = "problem_06_example.txt"
-# FILE_PATH = "problem_06_data.txt"
+# FILE_PATH = "problem_06_example.txt"
+FILE_PATH = "problem_06_data.txt"
 
 
 def load_map(file_path: str) -> tuple[np.ndarray, np.ndarray, int]:
@@ -71,7 +71,45 @@ def main():
                 break
 
         # Step forwards
-        pos[:] = pos_ahead[:]
+        if dir == 0:  # up
+            i_col_obstacles = np.arange(world.shape[0])[world[:, pos[1]] > 0]
+            i_col_obstacles: np.ndarray = i_col_obstacles[i_col_obstacles < pos[0]]
+            if i_col_obstacles.size == 0:
+                world[0 : pos[0], pos[1]] = -1
+                return False
+            i_next_obs = i_col_obstacles[-1]
+            world[pos[0] : i_next_obs : -1, pos[1]] = -1
+            pos[0] = i_next_obs + 1
+        elif dir == 2:  # down
+            i_col_obstacles = np.arange(world.shape[0])[world[:, pos[1]] > 0]
+            i_col_obstacles: np.ndarray = i_col_obstacles[i_col_obstacles > pos[0]]
+            if i_col_obstacles.size == 0:
+                world[pos[0] :, pos[1]] = -1
+                return False
+            i_next_obs = i_col_obstacles[0]
+            world[pos[0] : i_next_obs, pos[1]] = -1
+            pos[0] = i_next_obs - 1
+        elif dir == 1:  # right
+            i_row_obstacles = np.arange(world.shape[1])[world[pos[0], :] > 0]
+            i_row_obstacles: np.ndarray = i_row_obstacles[i_row_obstacles > pos[1]]
+            if i_row_obstacles.size == 0:
+                world[pos[0] :, pos[1]] = -1
+                return False
+            i_next_obs = i_row_obstacles[0]
+            world[pos[0], pos[1] : i_next_obs] = -1
+            pos[1] = i_next_obs - 1
+        elif dir == 3:  # left
+            i_row_obstacles = np.arange(world.shape[1])[world[pos[0], :] > 0]
+            i_row_obstacles: np.ndarray = i_row_obstacles[i_row_obstacles < pos[1]]
+            if i_row_obstacles.size == 0:
+                world[pos[0], 0 : pos[1]] = -1
+                return False
+            i_next_obs = i_row_obstacles[-1]
+            world[pos[0], pos[1] : i_next_obs : -1] = -1
+            pos[1] = i_next_obs + 1
+        else:
+            assert False
+
         dir_in[0] = dir
         return True
 
@@ -107,6 +145,8 @@ def main():
     simulate_guard_path(position, direction, init_world)
     mask_space = init_world == -1
 
+    print(f"{np.sum(mask_space)=}")
+
     indices = np.indices(ch_world.shape)
     candidate_obstacles = np.vstack(
         [indices[0][mask_space], indices[1][mask_space]]
@@ -128,6 +168,8 @@ def main():
     outcomes = np.array(outcomes)
     for oc in np.unique(outcomes):
         print(f"{oc}: {np.sum(outcomes==oc)}")
+
+    # Answer: 1753 loops
 
 
 main()
