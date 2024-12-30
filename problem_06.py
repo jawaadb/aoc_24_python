@@ -2,8 +2,8 @@ import numpy as np
 from helpers import load_text
 
 
-# FILE_PATH = "problem_06_example.txt"
-FILE_PATH = "problem_06_data.txt"
+FILE_PATH = "problem_06_example.txt"
+# FILE_PATH = "problem_06_data.txt"
 
 
 def load_map(file_path: str) -> tuple[np.ndarray, np.ndarray, int]:
@@ -103,8 +103,11 @@ def main():
             ):
                 return "loop"
 
+    init_world = world.copy()
+    simulate_guard_path(position, direction, init_world)
+    mask_space = init_world == -1
+
     indices = np.indices(ch_world.shape)
-    mask_space = ch_world == b"."
     candidate_obstacles = np.vstack(
         [indices[0][mask_space], indices[1][mask_space]]
     ).transpose()
@@ -112,7 +115,7 @@ def main():
     outcomes: list[str] = []
     for iobs in range(candidate_obstacles.shape[0]):
         print(
-            f"{iobs}/{candidate_obstacles.shape[0]} ({iobs/candidate_obstacles.shape[0]:.1%})",
+            f"{iobs+1}/{candidate_obstacles.shape[0]} ({(iobs+1)/candidate_obstacles.shape[0]:.1%})",
             end="\r",
         )
         candidate_obs = candidate_obstacles[iobs, :]
@@ -120,6 +123,7 @@ def main():
         this_world[candidate_obs[0], candidate_obs[1]] = 1
         result = simulate_guard_path(position, direction, this_world)
         outcomes.append(result)
+    print("")
 
     outcomes = np.array(outcomes)
     for oc in np.unique(outcomes):
