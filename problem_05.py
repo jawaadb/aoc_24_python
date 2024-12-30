@@ -1,8 +1,10 @@
 import numpy as np
 from helpers import load_text
+from functools import partial
 
 
-FILE_PATH = "problem_05_example.txt"
+# FILE_PATH = "problem_05_example.txt"
+FILE_PATH = "problem_05_data.txt"
 
 
 def load_file(file_path):
@@ -22,10 +24,43 @@ def load_file(file_path):
     return rules, books
 
 
+def check_against_rules(book: np.ndarray, rules: np.ndarray) -> bool:
+    assert isinstance(book, np.ndarray) and isinstance(rules, np.ndarray)
+    assert rules.shape[1] == 2
+
+    def check_against_rule(book: np.ndarray, rule: np.ndarray) -> bool:
+        book_indices = np.arange(book.size)
+        idxL = book_indices[book == rule[0]][0]
+        idxR = book_indices[book == rule[1]][0]
+        return idxL < idxR
+
+    rules_sub = rules[np.sum(np.isin(rules, book), axis=1) == 2, :]
+
+    rule_passed = np.array(
+        [
+            check_against_rule(book, rules_sub[irule, :])
+            for irule in range(rules_sub.shape[0])
+        ],
+        np.bool,
+    )
+
+    return np.all(rule_passed)
+
+
 def main():
+    def extract_middle_page(book: np.ndarray) -> int:
+        assert book.size % 2 == 1
+        return book[(book.size - 1) // 2]
+
     rules, books = load_file(FILE_PATH)
-    print(rules)
-    print(books)
+
+    correct_books = filter(partial(check_against_rules, rules=rules), books)
+
+    mid_page_sum = 0
+    for book in correct_books:
+        mid_page_sum += extract_middle_page(book)
+
+    print(f"{mid_page_sum=}")  # Answer: 5166
 
 
 main()
