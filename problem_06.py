@@ -27,15 +27,15 @@ def load_map(file_path: str) -> tuple[np.ndarray, np.ndarray, int]:
         [indices[0][guard_mask][0], indices[1][guard_mask][0]], np.int64
     )
 
-    return num_world, guard_position, guard_direction
+    return init_world, num_world, guard_position, guard_direction
 
 
 def main():
-    world, position, direction = load_map(FILE_PATH)
+    ch_world, world, position, direction = load_map(FILE_PATH)
 
     nrows, ncols = world.shape
 
-    def advance_position(pos: np.ndarray, dir_in: list[int]) -> bool:
+    def advance_position(pos: np.ndarray, dir_in: list[int], world: np.ndarray) -> bool:
         assert isinstance(dir_in, list)
         assert len(dir_in) == 1
         dir = dir_in[0]
@@ -75,15 +75,55 @@ def main():
         dir_in[0] = dir
         return True
 
-    max_iter = 10000
-    direction = [direction]
-    for n in range(max_iter + 1):
-        assert n != max_iter
-        if advance_position(position, direction) == False:
-            break
+    def simulate_guard_path(
+        init_pos: np.ndarray, init_dir: int, world: np.ndarray
+    ) -> str:
+        max_iter = 10000
+        history_buffer = np.full((max_iter, 3), -1, dtype=np.int64)
+        position = init_pos.copy()
+        direction = [init_dir]
 
-    num_positions_visited = np.sum(-world[world < 0])
-    print(f"{num_positions_visited=}")  # Answer: 5239
+        for n in range(max_iter + 1):
+            if n == max_iter:
+                return "max_iter"
+
+            history_buffer[n, 0:2] = position
+            history_buffer[n, 2] = direction[0]
+
+            if advance_position(position, direction, world) == False:
+                return "out_of_bounds"
+
+            posdir = np.hstack([position, direction[0]], dtype=np.int64)
+
+            history = history_buffer[history_buffer[:, 0] != -1, :]
+            if np.any(
+                (history[:, 0] == posdir[0])
+                & (history[:, 1] == posdir[1])
+                & (history[:, 2] == posdir[2]),
+            ):
+                return "loop"
+
+    indices = np.indices(ch_world.shape)
+    mask_space = ch_world == b"."
+    candidate_obstacles = np.vstack(
+        [indices[0][mask_space], indices[1][mask_space]]
+    ).transpose()
+
+    outcomes: list[str] = []
+    for iobs in range(candidate_obstacles.shape[0]):
+        print(
+            f"{iobs}/{candidate_obstacles.shape[0]} ({iobs/candidate_obstacles.shape[0]:.1%})",
+            end="\r",
+        )
+        candidate_obs = candidate_obstacles[iobs, :]
+        this_world = world.copy()
+        this_world[candidate_obs[0], candidate_obs[1]] = 1
+        result = simulate_guard_path(position, direction, this_world)
+        outcomes.append(result)
+
+    outcomes = np.array(outcomes)
+    for oc in np.unique(outcomes):
+        print(f"{oc}: {np.sum(outcomes==oc)}")
 
 
 main()
