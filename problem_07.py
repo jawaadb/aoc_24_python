@@ -17,15 +17,21 @@ def main():
 
     def check_equation(result: int, numbers: list[int]) -> bool:
         qty_numbers = len(numbers)
-        qty_combinations = 2 ** (qty_numbers - 1)
+        qty_combinations = 3 ** (qty_numbers - 1)
 
         for iops in [
-            [i // (2**n) % 2 for n in range(qty_numbers - 1)]
+            [i // (3**n) % 3 for n in range(qty_numbers - 1)]
             for i in range(qty_combinations)
         ]:
             this_result = numbers[0]
             for iop, num in zip(iops, numbers[1:]):
-                this_result = this_result + num if iop == 0 else this_result * num
+                match iop:
+                    case 0:
+                        this_result = this_result + num
+                    case 1:
+                        this_result = this_result * num
+                    case 2:
+                        this_result = int(f"{this_result}{num}")
 
             if this_result == result:
                 return True
@@ -33,13 +39,15 @@ def main():
         return False
 
     sum = 0
-    for line in lines:
+    for idx, line in enumerate(lines):
+        print(f"{idx}/{len(lines)}", end="\r")
         result, numbers = parse_line(line)
         is_valid = check_equation(result, numbers)
         if is_valid:
             sum += result
 
-    print(f"{sum=}")  # Answer: 20281182715321
+    print("")
+    print(f"{sum=}")  # Answer: 159490400628354
 
 
 main()
