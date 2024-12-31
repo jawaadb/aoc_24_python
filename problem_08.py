@@ -7,6 +7,15 @@ FILE_PATH = "problem_08_data.txt"
 
 
 def main():
+    def gcd(nums: np.ndarray):
+        assert nums.size == 2
+        assert nums.dtype == np.int64
+        abs_nums = np.abs(nums)
+        a, b = np.max(abs_nums), np.min(abs_nums)
+        while b != 0:
+            a, b = b, a % b
+        return a
+
     grid = np.array([list(line.strip()) for line in load_text(FILE_PATH)], "S1")
     antenna_types = np.unique(grid[grid != b"."])
 
@@ -25,16 +34,28 @@ def main():
             locA = alocs[iA, :]
             locB = alocs[iB, :]
             dstBA = locB - locA
-            anode1 = locB + dstBA
-            anode2 = locA - dstBA
+            dstBA //= gcd(dstBA)
 
-            for anode in [anode1, anode2]:
-                # mark antinode if in bounds
+            n = 0
+            while True:
+                anode = locA + n * dstBA
                 if np.all((anode >= [0, 0]) & (anode < [nrows, ncols])):
                     antinodes[anode[0], anode[1]] = True
+                    n += 1
+                else:
+                    break
+
+            n = 0
+            while True:
+                anode = locA - n * dstBA
+                if np.all((anode >= [0, 0]) & (anode < [nrows, ncols])):
+                    antinodes[anode[0], anode[1]] = True
+                    n += 1
+                else:
+                    break
 
     antinode_count = np.sum(antinodes)
-    print(f"{antinode_count=}")  # Answer: 222
+    print(f"{antinode_count=}")  # Answer: 884
 
 
 main()
