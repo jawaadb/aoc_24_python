@@ -22,7 +22,7 @@ def main():
 
     def score_trailhead(
         grid: np.ndarray, pos: np.ndarray, reachable: np.ndarray, height=0
-    ):
+    ) -> int:
         # print(f"{height}: {pos[:].reshape(-1)}")
         next_poss = dirs + pos @ np.ones((1, 4), dtype=np.int64)
         next_poss = next_poss[
@@ -43,26 +43,30 @@ def main():
         next_poss = next_poss[:, near_heights == next_height]
 
         if next_poss.shape[1] == 0:
-            return
+            return 0
 
-        for ipos in range(next_poss.shape[1]):
-            next_pos = next_poss[:, ipos].reshape((2, 1))
-            if next_height == 9:
-                reachable[next_pos[0], next_pos[1]] = True
-            else:
-                score_trailhead(grid, next_pos, reachable, next_height)
+        if next_height == 9:
+            return next_poss.shape[1]
+
+        return np.sum(
+            [
+                score_trailhead(
+                    grid, next_poss[:, ipos].reshape((2, 1)), reachable, next_height
+                )
+                for ipos in range(next_poss.shape[1])
+            ]
+        )
 
     total_score = 0
     for itrailhead in range(trailhead_locs.shape[1]):
         print(f"{itrailhead+1}/{trailhead_locs.shape[1]}", end="\r")
         reachable = np.zeros(grid.shape, dtype=np.bool)
         start_pos = trailhead_locs[:, itrailhead].reshape((2, 1))
-        score_trailhead(grid, start_pos, reachable)
-        trail_score = np.sum(reachable)
+        trail_score = score_trailhead(grid, start_pos, reachable)
         total_score += trail_score
     print("")
 
-    print(f"{total_score=}")  # Answer: 489
+    print(f"{total_score=}")  # Answer: 1086
 
 
 main()
