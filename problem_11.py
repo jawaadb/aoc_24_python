@@ -1,40 +1,35 @@
 from helpers import load_text
+from functools import cache
+import time
 
 
-if False:
-    FILE_PATH = "problem_11_example.txt"
-else:
-    FILE_PATH = "problem_11_data.txt"
+FILE_PATH = "problem_11_data.txt"
+NUM_BLINKS = 75
 
 
 def main():
     stones = list(map(int, load_text(FILE_PATH)[0].strip().split()))
 
-    def blink():
-        idx = 0
-        while idx < len(stones):
-            if stones[idx] == 0:
-                stones[idx] = 1
-            elif len(digits := str(stones[idx])) % 2 == 0:
-                left = int(digits[0 : len(digits) // 2])
-                right = int(digits[len(digits) // 2 :])
-                stones[idx] = left
-                idx += 1
-                stones.insert(idx, right)
-            else:
-                stones[idx] *= 2024
+    @cache
+    def stone_value(stone, nblinks) -> int:
+        if stone == 0:
+            next_stones = [1]
+        elif len(digits := str(stone)) % 2 == 0:
+            left = int(digits[0 : len(digits) // 2])
+            right = int(digits[len(digits) // 2 :])
+            next_stones = [left, right]
+        else:
+            next_stones = [2024 * stone]
 
-            idx += 1
+        if nblinks == 1:
+            return len(next_stones)
+        else:
+            return sum(stone_value(s, nblinks - 1) for s in next_stones)
 
-    print(f'Init: {" ".join(map(str, stones))}')
-    num_blinks = 25
-    for i in range(num_blinks):
-        print(f"{i+1}/{num_blinks}", end="\r")
-        blink()
-    print("")
-
-    print(f"{len(stones)} stones after {num_blinks} blinks.")
-    # Answer: 217812
+    t0 = time.time()
+    answer = sum(stone_value(s, NUM_BLINKS) for s in stones)
+    print(f"{answer=}")
+    print(f"dt: {time.time()- t0:.3f} seconds")
 
 
 main()
