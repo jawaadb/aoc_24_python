@@ -1,8 +1,8 @@
 from helpers import load_text
 import numpy as np
 
-# FILE_PATH = "problem_12_example.txt"
-FILE_PATH = "problem_12_data.txt"
+FILE_PATH = "problem_12_example.txt"
+# FILE_PATH = "problem_12_data.txt"
 
 
 def load_map(file_path) -> np.ndarray:
@@ -51,9 +51,10 @@ def main():
             for ipt in range(adj_pts.shape[1]):
                 flood_fill(adj_pts[:, ipt], fill_mask, res_buff)
 
-        def measure(fill_mask: np.ndarray):
-            area = np.sum(fill_mask)
+        def measure_area(fill_mask: np.ndarray):
+            return np.sum(fill_mask)
 
+        def measure_perimeter(fill_mask: np.ndarray):
             dirs = np.array(
                 [[0, 1], [1, 0], [0, -1], [-1, 0]], dtype=np.int64
             ).transpose()
@@ -80,10 +81,9 @@ def main():
 
                 perimeter += perim_wall + perim_fence
 
-            return area, perimeter
+            return perimeter
 
         parsed = np.zeros(grid.shape, dtype=np.bool_)
-
         cost = 0
         i = 0
         while ~np.all(parsed):
@@ -100,8 +100,7 @@ def main():
             region = np.zeros(grid.shape, dtype=np.bool_)
             flood_fill(start_pos, plant_area, region)
 
-            area, perim = measure(region)
-            cost += area * perim
+            cost += measure_area(region) * measure_perimeter(region)
 
             parsed |= region
         print("")
