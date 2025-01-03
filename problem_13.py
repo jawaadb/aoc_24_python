@@ -28,28 +28,17 @@ def main():
         return [extract_game(c.strip()) for c in chunks]
 
     def solve_game(g: Game):
-        k = inv(np.vstack([g.dA, g.dB]).transpose()) @ g.pos
-        k = np.array(list(map(int, k)), np.int64)
+        k = np.int64(np.round(inv(np.vstack([g.dA, g.dB]).transpose()) @ g.pos))
 
-        if np.all(g.pos == k[0] * g.dA + k[1] * g.dB):
-            tokens = sum(k * [3, 1])
-            print(f"{k}: {tokens}")
-            return tokens
+        if np.all(g.dA * k[0] + g.dB * k[1] == g.pos):
+            return np.sum(k * [3, 1], dtype=np.int64)
         else:
-            return None
+            return 0
 
-    solve_games = lambda games: sum(
-        filter(lambda x: x is not None, (solve_game(g) for g in games))
-    )
-
-    games = load_games(EXAMPLE_FILE_PATH)
-    print(f"total={solve_games(games)}")
-
-    print("")
     games = load_games(DATA_FILE_PATH)
-    print(f"total={solve_games(games)}")
+    answer = sum(solve_game(g) for g in games)
 
-    # Wrong answer: 15046
+    print(f"{answer=}")  # Answer: 29187
 
 
 main()
