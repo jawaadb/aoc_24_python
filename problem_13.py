@@ -31,14 +31,21 @@ def main():
         k = np.int64(np.round(inv(np.vstack([g.dA, g.dB]).transpose()) @ g.pos))
 
         if np.all(g.dA * k[0] + g.dB * k[1] == g.pos):
-            return np.sum(k * [3, 1], dtype=np.int64)
+            return np.sum(k * [3, 1])
         else:
             return 0
 
-    games = load_games(DATA_FILE_PATH)
-    answer = sum(solve_game(g) for g in games)
+    def solve_p2_game(g: Game):
+        g = Game(pos=g.pos + 10000000000000, dA=g.dA, dB=g.dB)
+        return solve_game(g)
 
-    print(f"{answer=}")  # Answer: 29187
+    games = load_games(DATA_FILE_PATH)
+
+    p1 = sum([solve_game(g) for g in games])
+    p2 = sum([solve_p2_game(g) for g in games])
+
+    print(f"{p1=}")  # Answer: 29187
+    print(f"{p2=}")  # Answer: 99968222587852
 
 
 main()
