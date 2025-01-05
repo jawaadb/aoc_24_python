@@ -13,3 +13,16 @@ def line_to_numbers(line: str):
 def load_matrix(file_path: str, dtype=np.int64):
     lines = [line for line in load_text(file_path) if line != ""]
     return np.array([line_to_numbers(line) for line in lines], dtype=dtype)
+
+
+def load_grid(fp: str) -> np.ndarray:
+    str_grid = ("".join(load_text(fp))).strip()
+    return np.array([[ch for ch in l] for l in str_grid.split("\n")], dtype="S1")
+
+
+def disp_grid(grid: np.ndarray):
+    print(
+        "\n".join(
+            "".join(map(bytes.decode, grid[ir, :])) for ir in range(grid.shape[0])
+        )
+    )
