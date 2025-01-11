@@ -10,14 +10,14 @@ DATA_PATH = "problem_16_data.txt"
 
 START, END, WALL, SPACE = b"S", b"E", b"#", b"."
 
+to_tuple = lambda arr: (int(arr[0]), int(arr[1]))
+add = lambda p1, p2: (p1[0] + p2[0], p1[1] + p2[1])
+diff = lambda p1, p2: (p1[0] - p2[0], p1[1] - p2[1])
+
 
 def main():
-    to_tuple = lambda arr: (int(arr[0]), int(arr[1]))
-    add = lambda p1, p2: (p1[0] + p2[0], p1[1] + p2[1])
-    diff = lambda p1, p2: (p1[0] - p2[0], p1[1] - p2[1])
+    grid, indices = load_grid(DATA_PATH)
 
-    grid = load_grid(DATA_PATH)
-    indices = np.indices(grid.shape)
     start_pos = to_tuple(
         np.hstack([indices[0][grid == START], indices[1][grid == START]])
     )

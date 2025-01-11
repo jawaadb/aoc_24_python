@@ -17,7 +17,9 @@ def load_matrix(file_path: str, dtype=np.int64):
 
 def load_grid(fp: str) -> np.ndarray:
     str_grid = ("".join(load_text(fp))).strip()
-    return np.array([[ch for ch in l] for l in str_grid.split("\n")], dtype="S1")
+    grid = np.array([[ch for ch in l] for l in str_grid.split("\n")], dtype="S1")
+    indices = np.indices(grid.shape)
+    return grid, indices
 
 
 def disp_grid(grid: np.ndarray):
