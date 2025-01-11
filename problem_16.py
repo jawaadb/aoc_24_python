@@ -1,7 +1,7 @@
 from helpers import load_grid, disp_grid
 import numpy as np
 from functools import partial
-import time
+from typing import Dict
 
 EG1_PATH = "problem_16_eg1.txt"
 EG2_PATH = "problem_16_eg2.txt"
@@ -14,75 +14,89 @@ to_tuple = lambda arr: (int(arr[0]), int(arr[1]))
 add = lambda p1, p2: (p1[0] + p2[0], p1[1] + p2[1])
 diff = lambda p1, p2: (p1[0] - p2[0], p1[1] - p2[1])
 
+dirs = [(0, 1), (-1, 0), (0, -1), (1, 0)]
+
 
 def main():
-    grid, indices = load_grid(DATA_PATH)
+    grid, indices = load_grid(EG1_PATH)
 
     start_pos = to_tuple(
         np.hstack([indices[0][grid == START], indices[1][grid == START]])
     )
+    start_dir = dirs.index((0, 1))
 
-    best_score = [None]
-    fd = {}
+    paths: list[list[tuple[int, int]]] = [[start_pos + tuple([start_dir])]]
 
-    dirs = [(0, 1), (-1, 0), (0, -1), (1, 0)]
-    is_space = lambda p: (grid[p[0], p[1]] != WALL)
-    DD = {0: ">", 1: "^", 2: "<", 3: "v"}
-
-    def flood(pos, dir, sum):
-        inp = pos + tuple([dir])
-        if (inp in fd) and (sum >= fd[inp]):
-            return
-        fd[inp] = sum
-
-        if grid[*pos] == END:
-            if best_score[0] is None or sum < best_score[0]:
-                best_score[0] = sum
-                print(f"new best: {best_score[0]}")
-            return
-
-        if best_score[0] is not None and sum >= best_score[0]:
-            return
-
-        gcpy = grid.copy()
-
+    def next_pos_options(path: list[tuple[int, int, int]]):
         while True:
-            grid[*pos] = b" "
-            dir_opp = (dir + 2) % 4
-            cposs = [add(pos, dirs[i]) for i in range(4)]
-            cposs = [p for p in cposs if is_space(p)]
-            cdirs = [dirs.index(diff(p, pos)) for p in cposs]
-            mask = [d != dir_opp for d in cdirs]
-            cposs = [p for p, m in zip(cposs, mask) if m]
-            cdirs = [d for d, m in zip(cdirs, mask) if m]
+            p, d = path[-1][:2], path[-1][2]
+            if grid[*p] == END:
+                return []
+            dir_opp = (d + 2) % 4
+            cpds = (add(p, dirs[i]) + tuple([i]) for i in range(4))  # cardinal pts
+            cpds = filter(lambda pd: pd[-1] != dir_opp, cpds)  # exclude reversing
+            cpds = filter(lambda pd: grid[*pd[:2]] != WALL, cpds)  # exclude walls
+            cpds = filter(lambda pd: pd not in path, cpds)  # exclude revisiting
 
-            if len(cposs) != 1:
-                break
-            if grid[*cposs[0]] == END:
-                break
-
-            if cdirs[0] != dir:
-                sum += 1000
-            sum += 1
-            gcpy[*pos] = b"o"
-            pos, dir = cposs[0], cdirs[0]
-
-        gcpy[*pos] = DD[dir].encode("utf-8")
-        for p, d in zip(cposs, cdirs):
-            gcpy[*p] = DD[d].encode("utf-8")
-        if False:
-            if pos[0] < grid.shape[0] // 2:
-                disp_grid(gcpy[: grid.shape[0] // 2, :])
+            cpds = list(cpds)
+            if len(cpds) == 1:
+                path.append(cpds[0])
             else:
-                disp_grid(gcpy)
-            print(f"(best: {best_score[0]}) {pos=}, {DD[dir]}, {sum=}")
+                return cpds
 
-        for p, d in zip(cposs, cdirs):
-            flood(p, d, sum + 1 + (0 if dirs.index(diff(p, pos)) == dir else 1000))
+    def score_path(path: tuple[int, int, int]) -> int:
+        assert len(path) != 0
+        nsteps = len(path) - 1
+        nturns = sum(
+            0 if path[i][2] == path[i - 1][2] else 1 for i in range(1, len(path))
+        )
+        return nsteps + 1000 * nturns
 
-    flood(start_pos, 0, 0)
+    best_score = None
+    full_paths = []
+    while True:
+        ipath = 0
+        for _ in range(len(paths)):
+            path = paths[ipath]
+            cposs = next_pos_options(path)
 
-    print(f"best: {best_score[0]}")
+            match len(cposs):
+                case 0:
+                    if grid[path[-1][:2]] == END:
+                        this_score = score_path(path)
+                        if best_score is None or this_score < best_score:
+                            best_score = this_score
+                            print(f"new best: {best_score}")
+                        full_paths.append(path)
+                    paths.pop(ipath)
+                case 1:
+                    path.append(cposs[0])
+                    ipath += 1
+                    assert False
+                case _:
+                    for i in range(len(cposs) - 1):
+                        paths.insert(ipath + i + 1, path.copy())
+                    for i in range(len(cposs)):
+                        paths[ipath + i].append(cposs[i])
+                    ipath += len(cposs)
+
+        if best_score is not None:
+            paths = list(filter(lambda pth: score_path(pth) <= best_score, paths))
+        if len(paths) == 0:
+            break
+    print("")
+
+    full_paths = list(filter(lambda pth: score_path(pth) <= best_score, full_paths))
+
+    for path in full_paths:
+        for p in path:
+            grid[*p[:2]] = b"O"
+
+    num_best_path_tiles = np.sum(grid == b"O")
+
+    disp_grid(grid)
+    print(f"{best_score=}")
+    print(f"tiles visited: {num_best_path_tiles}")
 
 
 main()
