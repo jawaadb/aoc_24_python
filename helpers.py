@@ -15,7 +15,7 @@ def load_matrix(file_path: str, dtype=np.int64):
     return np.array([line_to_numbers(line) for line in lines], dtype=dtype)
 
 
-def load_grid(fp: str) -> np.ndarray:
+def load_grid(fp: str) -> tuple[np.ndarray, np.ndarray]:
     str_grid = ("".join(load_text(fp))).strip()
     grid = np.array([[ch for ch in l] for l in str_grid.split("\n")], dtype="S1")
     indices = np.indices(grid.shape)
