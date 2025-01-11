@@ -14,7 +14,6 @@ add = lambda p1, p2: (p1[0] + p2[0], p1[1] + p2[1])
 diff = lambda p1, p2: (p1[0] - p2[0], p1[1] - p2[1])
 
 dirs = [(0, 1), (-1, 0), (0, -1), (1, 0)]
-DD = {0: ">", 1: "^", 2: "<", 3: "v"}
 
 
 def main():
@@ -45,17 +44,8 @@ def main():
         def disp(self):
             gcpy = grid.copy()
             for p in self.pts:
-                gcpy[*p[:2]] = DD[p[2]].encode("utf-8")
+                gcpy[*p[:2]] = {0: b">", 1: b"^", 2: b"<", 3: b"v"}[p[2]]
             disp_grid(gcpy)
-
-    start_pos = to_tuple(
-        np.hstack([indices[0][grid == START], indices[1][grid == START]])
-    )
-    start_dir = dirs.index((0, 1))
-
-    paths: list[Path] = [Path(pts=[], score=0).append(start_pos + tuple([start_dir]))]
-
-    best_score: int = None
 
     def next_point_options(path: Path):
         while True:
@@ -76,46 +66,43 @@ def main():
             else:
                 return cpds
 
-    full_paths: list[Path] = []
-    while True:
+    start_pos = to_tuple(
+        np.hstack([indices[0][grid == START], indices[1][grid == START]])
+    )
+
+    paths: list[Path] = [Path(pts=[], score=0).append(start_pos + tuple([0]))]
+
+    end_paths: list[Path] = []
+    while len(paths) != 0:
         ipath = 0
         for _ in range(len(paths)):
-            path: Path = paths[ipath]
-            cposs = next_point_options(path)
+            cposs = next_point_options(paths[ipath])
 
             match len(cposs):
                 case 0:
-                    end_path = paths.pop(ipath)
-                    if grid[*end_path.pts[-1][:2]] == END:
-                        if best_score is None or end_path.score < best_score:
-                            best_score = end_path.score
-                            print(f"new best: {best_score}", end="\r")
-                        full_paths.append(end_path)
+                    end_paths.append(paths.pop(ipath))
                 case 1:
                     assert False
                 case _:
                     for i in range(len(cposs) - 1):
-                        paths.insert(ipath + i + 1, path.copy())
+                        paths.insert(ipath + i + 1, paths[ipath].copy())
                     for i in range(len(cposs)):
                         paths[ipath + i].append(cposs[i])
                     ipath += len(cposs)
 
-        if best_score is not None:
-            paths = list(filter(lambda pth: pth.score <= best_score, paths))
-        if len(paths) == 0:
-            break
+    full_paths = [pth for pth in end_paths if grid[*pth.pts[-1][:2]] == END]
+    best_score = min(pth.score for pth in full_paths)
+    optimal_paths = [pth for pth in full_paths if pth.score == best_score]
 
-    full_paths = list(filter(lambda pth: pth.score <= best_score, full_paths))
-
-    for path in full_paths:
+    for path in optimal_paths:
         for p in path.pts:
             grid[*p[:2]] = b"O"
 
     num_best_path_tiles = np.sum(grid == b"O")
 
     disp_grid(grid)
-    print(f"{best_score=}")
-    print(f"tiles visited: {num_best_path_tiles}")
+    print(f"{best_score=}")  # Part 1: 143564
+    print(f"tiles visited: {num_best_path_tiles}")  # Part 2: 593
 
 
 main()
